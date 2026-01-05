@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../logo.png" alt="VISOR logo" height="80" />
+  <img src="../../logo.png" alt="VISOR logo" height="180" />
 </p>
 
 <h1 align="center">VISOR — Vulnerability Identification Scanner & Operational Reporter</h1>
