@@ -105,6 +105,7 @@ rules:
     severity: "CRITICAL"
     cvss: 7.5
     cwe: [200]
+    link: https://example.com/docs/SEC-001  # Опциональная ссылка
     description:
       ru: "Режим отладки включен в продакшене"
       en: "Debug mode is enabled"
