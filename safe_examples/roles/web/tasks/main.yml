@@ -1,0 +1,13 @@
+---
+- name: Web role tasks
+  hosts: all
+  tasks:
+    - name: Install packages
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Example message
+      shell: |
+        echo "image: webapp:1.0.0"

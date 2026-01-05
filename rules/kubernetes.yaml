@@ -1,0 +1,117 @@
+metadata:
+  severity_map:
+    CRITICAL: {color: "red", deduction: 40}
+    HIGH: {color: "light_red", deduction: 25}
+    MEDIUM: {color: "yellow", deduction: 15}
+    LOW: {color: "blue", deduction: 5}
+    INFO: {color: "white", deduction: 0}
+
+target_tag: kubernetes
+
+detect:
+  yaml:
+    required_root_keys_any: ["apiVersion", "kind"]
+
+rules:
+  # --- CRITICAL ---
+  - id: privileged-container
+    type: regex
+    pattern: 'privileged:\s*true'
+    severity: CRITICAL
+    cvss: 9.8
+    cwe: [250]
+    description:
+      ru: "Контейнер запускается в привилегированном режиме."
+      en: "Container runs in privileged mode."
+
+  - id: allow-privilege-escalation
+    type: regex
+    pattern: 'allowPrivilegeEscalation:\s*true'
+    severity: CRITICAL
+    cvss: 8.8
+    cwe: [269]
+    description:
+      ru: "Разрешено повышение привилегий (allowPrivilegeEscalation: true)."
+      en: "Privilege escalation allowed (allowPrivilegeEscalation: true)."
+
+  - id: run-as-non-root
+    type: regex
+    pattern: 'runAsUser:\s*0'
+    severity: CRITICAL
+    cvss: 8.8
+    cwe: [250]
+    description:
+      ru: "Запуск от UID 0 (root) в Pod/Container."
+      en: "Running as UID 0 (root)."
+
+  # --- HIGH ---
+  - id: host-network
+    type: regex
+    pattern: 'hostNetwork:\s*true'
+    severity: HIGH
+    cvss: 7.5
+    cwe: [284]
+    description:
+      ru: "Включен hostNetwork — отключает сетевую изоляцию."
+      en: "hostNetwork enabled — disables network isolation."
+
+  - id: host-pid
+    type: regex
+    pattern: 'hostPID:\s*true'
+    severity: HIGH
+    cvss: 7.5
+    cwe: [284]
+    description:
+      ru: "Доступ к PID-пространству хоста (hostPID: true)."
+      en: "Host PID namespace access (hostPID: true)."
+
+  - id: host-ipc
+    type: regex
+    pattern: 'hostIPC:\s*true'
+    severity: HIGH
+    cvss: 7.5
+    cwe: [284]
+    description:
+      ru: "Доступ к IPC-пространству хоста (hostIPC: true)."
+      en: "Host IPC namespace access (hostIPC: true)."
+
+  - id: image-tag
+    type: regex
+    pattern: 'image:.*:latest'
+    severity: HIGH
+    cvss: 6.5
+    cwe: [1104]
+    description:
+      ru: "Используется образ с тегом :latest — нарушает воспроизводимость."
+      en: "Image tag :latest used — hurts reproducibility."
+
+  - id: dangerous-capabilities
+    type: regex
+    pattern: 'capabilities:\s*\n\s*add:.*(SYS_ADMIN|NET_ADMIN)'
+    severity: HIGH
+    cvss: 8.0
+    cwe: [269]
+    description:
+      ru: "Добавлены опасные capability (SYS_ADMIN/NET_ADMIN)."
+      en: "Dangerous capabilities added (SYS_ADMIN/NET_ADMIN)."
+
+  # --- MEDIUM ---
+  - id: read-only-root-filesystem
+    type: regex
+    pattern: 'readOnlyRootFilesystem:\s*false'
+    severity: MEDIUM
+    cvss: 5.0
+    cwe: [284]
+    description:
+      ru: "Файловая система контейнера не read-only."
+      en: "Container root filesystem is not read-only."
+
+  - id: run-as-non-root
+    type: regex
+    pattern: 'runAsNonRoot:\s*false'
+    severity: MEDIUM
+    cvss: 5.0
+    cwe: [250]
+    description:
+      ru: "Запуск не запрещен от root (runAsNonRoot: false)."
+      en: "Not enforcing non-root user (runAsNonRoot: false)."

@@ -1,0 +1,33 @@
+version: '3'
+services:
+  app:
+    image: myapp:1.0.0
+    restart: unless-stopped
+    volumes: []
+    mem_limit: 256m
+    cpus: 0.5
+    read_only: true
+    ulimits:
+      nproc: 4096
+      nofile:
+        soft: 1024
+        hard: 2048
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      com.example.service: "app"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+networks:
+  internal: {}

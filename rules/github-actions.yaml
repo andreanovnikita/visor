@@ -1,0 +1,91 @@
+metadata:
+  severity_map:
+    CRITICAL: {color: "red", deduction: 40}
+    HIGH: {color: "light_red", deduction: 25}
+    MEDIUM: {color: "yellow", deduction: 15}
+    LOW: {color: "blue", deduction: 5}
+    INFO: {color: "white", deduction: 0}
+
+target_tag: github-actions
+
+detect:
+  path_glob_any:
+    - ".github/workflows/*.yml"
+    - ".github/workflows/*.yaml"
+  yaml:
+    required_root_keys_any: ["on", "jobs"]
+
+rules:
+  # --- CRITICAL ---
+  - id: GHA-C01
+    type: regex
+    pattern: 'uses:\s*[^@\s]+@(main|master|HEAD)'
+    severity: CRITICAL
+    cvss: 8.8
+    cwe: [494, 829]
+    description:
+      ru: "Незапиненный экшен (main/master/HEAD) — риск supply-chain."
+      en: "Unpinned action (main/master/HEAD) — supply chain risk."
+
+  - id: GHA-C02
+    type: regex
+    pattern: 'pull_request_target:'
+    severity: CRITICAL
+    cvss: 8.0
+    cwe: [284]
+    description:
+      ru: "Событие pull_request_target потенциально опасно при небезопасных шагах."
+      en: "pull_request_target can be dangerous if not handled securely."
+
+  # --- HIGH ---
+  - id: GHA-H01
+    type: regex
+    pattern: 'permissions:\s*write-all|permissions:\s*\n\s*contents:\s*write'
+    severity: HIGH
+    cvss: 7.5
+    cwe: [284]
+    description:
+      ru: "Избыточные права токена (write). Сузьте permissions."
+      en: "Excessive GITHUB_TOKEN permissions (write). Reduce permissions."
+
+  - id: GHA-H02
+    type: regex
+    pattern: 'uses:\s*actions/checkout@v1'
+    severity: HIGH
+    cvss: 7.0
+    cwe: [1104]
+    description:
+      ru: "Устаревший actions/checkout@v1. Используйте >= v3 и пин по SHA."
+      en: "Deprecated actions/checkout@v1. Use >= v3 and pin by SHA."
+
+  # --- MEDIUM ---
+  - id: GHA-M01
+    type: regex
+    pattern: 'uses:\s*[^@\s]+@v(1|2)'
+    severity: MEDIUM
+    cvss: 5.3
+    cwe: [1104]
+    description:
+      ru: "Версия экшена старше v3. Рекомендуется обновить и пиновать по SHA."
+      en: "Action version older than v3. Update and pin by commit SHA."
+
+  - id: GHA-M02
+    type: regex
+    pattern: '::set-env|::add-path'
+    severity: MEDIUM
+    cvss: 6.5
+    cwe: [77]
+    description:
+      ru: "Используются устаревшие и опасные команды (::set-env/::add-path)."
+      en: "Deprecated and unsafe workflow commands used (::set-env/::add-path)."
+
+  # --- LOW / INFO ---
+  - id: GHA-L01
+    type: regex
+    pattern: 'runs-on:\s*ubuntu-latest'
+    severity: LOW
+    cvss: 3.1
+    cwe: [1104]
+    description:
+      ru: "ubuntu-latest меняется со временем. Закрепляйте runner версию."
+      en: "ubuntu-latest changes over time. Pin runner version."

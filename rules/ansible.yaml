@@ -1,0 +1,156 @@
+metadata:
+  severity_map:
+    CRITICAL: {color: "red", deduction: 40}
+    HIGH: {color: "light_red", deduction: 25}
+    MEDIUM: {color: "yellow", deduction: 15}
+    LOW: {color: "blue", deduction: 5}
+    INFO: {color: "white", deduction: 0}
+
+target_tag: ansible
+
+detect:
+  path_glob_any:
+    - "ansible/*.yml"
+    - "ansible/*.yaml"
+    - "**/playbooks/*.yml"
+    - "**/playbooks/*.yaml"
+    - "**/roles/*/tasks/*.yml"
+    - "**/roles/*/tasks/*.yaml"
+  yaml:
+    required_root_keys_any: ["hosts", "tasks", "roles"]
+
+rules:
+  # --- CRITICAL ---
+  - id: "ANS-C01"
+    type: "regex"
+    pattern: "become:\\s*(true|yes|on|1)"
+    severity: "CRITICAL"
+    cvss: 8.8
+    cwe: [269]
+    description:
+      ru: "Глобальное использование become: true. Рекомендуется включать привилегии только для конкретных задач."
+      en: "Global 'become: true' detected. Enable privilege escalation only for specific tasks."
+
+  - id: "ANS-C02"
+    type: "regex"
+    pattern: "(shell|command):.*(curl|wget).*(\\||;).*sh"
+    severity: "CRITICAL"
+    cvss: 9.8
+    cwe: [494]
+    description:
+      ru: "Запуск скриптов из интернета через pipe. Это критическая уязвимость выполнения кода."
+      en: "Piping internet scripts to shell. This is a critical RCE vulnerability."
+
+  - id: "ANS-C03"
+    type: "regex"
+    pattern: "copy:.*src:.*\\.(id_rsa|pem|key|p12)"
+    severity: "CRITICAL"
+    cvss: 8.8
+    cwe: [522]
+    description:
+      ru: "Передача приватных ключей через модуль copy. Используйте Ansible Vault для секретов."
+      en: "Transferring private keys via copy module. Use Ansible Vault for sensitive data."
+
+  - id: "ANS-C04"
+    type: "regex"
+    pattern: "mode:\\s*['\"]?(0777|777)['\"]?"
+    severity: "CRITICAL"
+    cvss: 7.8
+    cwe: [732]
+    description:
+      ru: "Установка прав 777 на файлы или директории небезопасна."
+      en: "Setting 777 permissions on files or directories is insecure."
+
+  # --- HIGH ---
+  - id: "ANS-H01"
+    type: "regex"
+    pattern: "apt:.*upgrade:\\s*(dist|yes|safe)"
+    severity: "HIGH"
+    cvss: 7.0
+    cwe: [1104]
+    description:
+      ru: "Обновление пакетов (upgrade) в плейбуках делает состояние хоста непредсказуемым."
+      en: "Package upgrade in playbooks makes the host state non-deterministic."
+
+  - id: "ANS-H02"
+    type: "regex"
+    pattern: "image:.*:latest"
+    severity: "HIGH"
+    cvss: 6.5
+    cwe: [1104]
+    description:
+      ru: "Использование тега :latest для контейнеров лишает возможности отката к стабильной версии."
+      en: "Using :latest tag for containers prevents reliable rollbacks to stable versions."
+
+  - id: "ANS-H03"
+    type: "regex"
+    pattern: "(password|token|secret):.*{{.*}}"
+    severity: "HIGH"
+    cvss: 7.5
+    cwe: [532]
+    not_contains: "no_log: (true|yes)"
+    description:
+      ru: "Передача секретов в переменные без параметра no_log: true приведет к их утечке в логи."
+      en: "Passing secrets without 'no_log: true' will leak them into the execution logs."
+
+  # --- MEDIUM ---
+  - id: "ANS-M01"
+    type: "regex"
+    pattern: "ignore_errors:\\s*(true|yes|on|1)"
+    severity: "MEDIUM"
+    cvss: 5.0
+    cwe: [391]
+    description:
+      ru: "Игнорирование ошибок может скрыть сбой важного этапа настройки."
+      en: "Ignoring errors can hide failures in critical configuration steps."
+
+  - id: "ANS-M02"
+    type: "regex"
+    pattern: '^\s*shell:\s+[^|&><;*?!\n\s][^|&><;*?!\n]*$'
+    severity: "MEDIUM"
+    cvss: 5.0
+    cwe: [78]
+    description:
+      ru: "Использование модуля shell для простых команд. По возможности используйте command или профильные модули."
+      en: "Using shell module for simple commands. Prefer 'command' or specialized modules."
+
+  - id: "ANS-M03"
+    type: "regex"
+    pattern: "git:.*version:\\s*(master|main)"
+    severity: "MEDIUM"
+    cvss: 6.5
+    cwe: [494]
+    description:
+      ru: "Деплой из веток master/main нестабилен. Рекомендуется использовать конкретные теги или хэши коммитов."
+      en: "Deploying from master/main branches is unstable. Use specific tags or commit hashes."
+
+  # --- LOW / INFO ---
+  - id: "ANS-L01"
+    type: "not_contains"
+    pattern: "name:"
+    severity: "LOW"
+    cvss: 3.1
+    cwe: [710]
+    description:
+      ru: "У задачи отсутствует имя (name). Это затрудняет чтение логов и отладку."
+      en: "Task is missing a name. This makes logs and debugging harder to follow."
+
+  - id: "ANS-L02"
+    type: "regex"
+    pattern: "creates:\\s*$"
+    severity: "LOW"
+    cvss: 3.1
+    cwe: [664]
+    description:
+      ru: "Команда shell/command не проверяет наличие файла (creates). Это нарушает идемпотентность."
+      en: "Command/shell lacks 'creates' parameter, which breaks idempotency."
+
+  - id: "ANS-I01"
+    type: "contains"
+    pattern: "deprecated"
+    severity: "INFO"
+    cvss: 0.0
+    cwe: [477]
+    description:
+      ru: "В коде найдены упоминания устаревших параметров. Проверьте документацию версии Ansible."
+      en: "Deprecated parameters detected. Check the Ansible version documentation."

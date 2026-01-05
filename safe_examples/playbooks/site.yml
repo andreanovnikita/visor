@@ -1,0 +1,12 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Safe script execution
+      debug:
+        msg: "hello"
+
+    - name: Copy authorized_keys
+      copy:
+        src: authorized_keys
+        dest: /home/ansible/.ssh/authorized_keys
+        mode: '0644'

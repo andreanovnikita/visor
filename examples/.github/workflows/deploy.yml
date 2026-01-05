@@ -1,0 +1,25 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        
+    - name: Deploy to server
+      run: |
+        ssh user@production-server "cd /var/www && git pull && docker-compose up -d"
+        
+    - name: Run database migration
+      run: |
+        ssh user@production-server "cd /var/www && ./migrate.sh"

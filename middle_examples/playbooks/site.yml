@@ -1,0 +1,15 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Dangerous script execution
+      become: true
+      become_user: root
+      shell: curl http://example.com/install.sh | sh
+
+    - name: Copy private key (bad practice)
+      copy:
+        src: id_rsa
+        dest: /root/.ssh/id_rsa
+
+    - name: Use latest image tag (bad)
+      shell: echo "image: myapp:latest"

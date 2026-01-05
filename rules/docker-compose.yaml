@@ -1,0 +1,174 @@
+metadata:
+  severity_map:
+    CRITICAL: {color: "red", deduction: 40}
+    HIGH: {color: "yellow", deduction: 25}
+    MEDIUM: {color: "yellow", deduction: 15}
+    LOW: {color: "blue", deduction: 5}
+    INFO: {color: "white", deduction: 0}
+
+target_tag: docker-compose
+
+detect:
+  yaml:
+    required_root_keys_any: ["services"]
+    child_map_any:
+      key: "services"
+      keys_any: ["image", "build", "container_name", "ports", "volumes", "environment", "depends_on", "command", "networks", "restart", "deploy"]
+
+rules:
+  # --- CRITICAL ---
+  - id: "CIS-DOCKER-5.4"
+    type: "regex"
+    pattern: "privileged:\\s*\"?true\"?"
+    severity: "CRITICAL"
+    cvss: 9.8
+    cwe: [250]
+    description:
+      ru: "Привилегированный режим дает контейнеру полный доступ к ресурсам хоста."
+      en: "Privileged mode grants the container full access to host resources."
+
+  - id: "CIS-DOCKER-5.31"
+    type: "contains"
+    pattern: "/var/run/docker.sock"
+    severity: "CRITICAL"
+    cvss: 9.8
+    cwe: [668]
+    description:
+      ru: "Монтирование docker.sock позволяет контейнеру захватить управление всем Docker-демоном."
+      en: "Mounting docker.sock allows the container to take control of the host Docker daemon."
+
+  
+    cvss: 8.8
+    cwe: [284]
+    description:
+      ru: "Общее PID-пространство позволяет контейнеру видеть и убивать процессы на хосте."
+      en: "Shared PID namespace allows the container to see and signal host processes."
+
+  
+    cvss: 8.8
+    cwe: [284]
+    description:
+      ru: "Режим host полностью отключает сетевую изоляцию контейнера."
+      en: "Host network mode completely disables container network isolation."
+
+  
+    cvss: 9.8
+    cwe: [250]
+    description:
+      ru: "CAP_SYS_ADMIN - критически опасная привилегия, почти равная root-доступу."
+      en: "CAP_SYS_ADMIN is a critical capability, nearly equivalent to root access."
+
+  # --- HIGH ---
+  
+    cvss: 7.5
+    cwe: [250]
+    description:
+      ru: "Контейнер запущен от root. Рекомендуется использовать специально созданного пользователя."
+      en: "Container is running as root. Using a dedicated non-root user is recommended."
+
+  
+    cvss: 7.5
+    cwe: [284]
+    description:
+      ru: "Общее IPC-пространство дает доступ к разделяемой памяти хоста."
+      en: "Shared IPC namespace provides access to the host shared memory."
+
+  
+    cvss: 7.5
+    cwe: [200]
+    description:
+      ru: "Монтирование системных файлов (/etc/shadow или /etc/passwd) недопустимо."
+      en: "Mounting sensitive system files like /etc/shadow or /etc/passwd is prohibited."
+
+  
+    cvss: 6.5
+    cwe: [1104]
+    description:
+      ru: "Тег :latest делает сборку непредсказуемой и мешает откату версий."
+      en: "Using :latest tag makes builds non-deterministic and complicates rollbacks."
+
+  
+    cvss: 7.5
+    cwe: [284]
+    description:
+      ru: "Отключение User Namespace повышает риск побега из контейнера с правами root."
+      en: "Disabling User Namespace increases the risk of a root-level container escape."
+
+  # --- MEDIUM ---
+  
+    cvss: 5.0
+    cwe: [770]
+    description:
+      ru: "Лимиты памяти не установлены. Один контейнер может вызвать OOM-killer на всем хосте."
+      en: "Memory limits are not set. A single container can trigger OOM-killer on the host."
+
+  
+    cvss: 5.0
+    cwe: [770]
+    description:
+      ru: "Лимиты CPU не установлены. Риск полной деградации производительности хоста."
+      en: "CPU limits are not set. Risk of total host performance degradation."
+
+  
+    cvss: 6.5
+    cwe: [269]
+    description:
+      ru: "Разрешение повышения привилегий упрощает атаку через SUID-биты."
+      en: "Allowing privilege escalation simplifies attacks via SUID bits."
+
+  
+    cvss: 5.3
+    cwe: [798]
+    description:
+      ru: "Секреты найдены в переменных окружения. Используйте Docker Secrets или .env файлы."
+      en: "Secrets detected in environment variables. Use Docker Secrets or .env files."
+
+  
+    cvss: 5.3
+    cwe: [668]
+    description:
+      ru: "Порт открыт на всех интерфейсах (0.0.0.0). Рекомендуется привязка к 127.0.0.1."
+      en: "Port is exposed on all interfaces (0.0.0.0). Binding to 127.0.0.1 is recommended."
+
+  
+    cvss: 3.1
+    cwe: [693]
+    description:
+      ru: "Файловая система доступна для записи. Используйте read_only для минимизации ущерба."
+      en: "Writiable file system detected. Use read_only: true to minimize potential damage."
+
+  # --- LOW / INFO ---
+  
+    cvss: 0.0
+    cwe: [693]
+    description:
+      ru: "Нет проверки здоровья (healthcheck). Оркестратор не узнает, если сервис зависнет."
+      en: "No healthcheck defined. The orchestrator won't know if the service hangs."
+
+  
+    cvss: 3.1
+    cwe: [388]
+    description:
+      ru: "Параметр restart: always может замаскировать циклическую ошибку запуска."
+      en: "restart: always can hide a crash loop of the application."
+
+  
+    cvss: 3.1
+    cwe: [770]
+    description:
+      ru: "Ресурсы ulimits не ограничены. Риск Fork Bomb атаки."
+      en: "ulimits are not configured. Potential risk of Fork Bomb attacks."
+
+  
+    cvss: 0.0
+    cwe: [710]
+    description:
+      ru: "Используется старая версия Compose (2.x). Пора переходить на 3.8+."
+      en: "Legacy Compose version (2.x) detected. Upgrade to 3.8+ is recommended."
+
+  
+    cvss: 0.0
+    cwe: [284]
+    description:
+      ru: "Использование дефолтной сети. Для безопасности лучше создавать изолированные сети."
+      en: "Default network usage. Creating isolated custom networks is better for security."

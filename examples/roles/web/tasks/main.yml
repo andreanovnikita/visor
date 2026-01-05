@@ -1,0 +1,17 @@
+---
+- name: Web role tasks
+  hosts: all
+  tasks:
+    - name: Install packages with dist upgrade (bad)
+      apt:
+        name: nginx
+        state: present
+        upgrade: dist
+
+    - name: Use latest image tag (bad)
+      shell: |
+        echo "image: webapp:latest"
+
+    - name: Ignore errors example (bad)
+      command: /bin/false
+      ignore_errors: true

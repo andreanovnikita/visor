@@ -1,0 +1,201 @@
+metadata:
+  severity_map:
+    CRITICAL: {color: "bold red", deduction: 30}
+    HIGH: {color: "red", deduction: 20}
+    MEDIUM: {color: "yellow", deduction: 10}
+    LOW: {color: "blue", deduction: 3}
+    INFO: {color: "cyan", deduction: 0}
+
+target_tag: "dockerfile"
+
+rules:
+
+  # CRITICAL
+
+  - id: "DF-C01"
+    type: "not_contains"
+    pattern: "USER "
+    severity: "CRITICAL"
+    cwe: [250]
+    cvss: 8.8
+    description: 
+      ru: "Инструкция USER отсутствует. По умолчанию контейнер запустится от root, что небезопасно."
+      en: "USER instruction is missing. The container will run as root by default."
+
+  - id: "DL3002"
+    type: "regex"
+    pattern: "USER\\s+(root|0)"
+    severity: "CRITICAL"
+    cwe: [250]
+    link: https://github.com/hadolint/hadolint/wiki/DL3002
+    cvss: 8.8
+    description: 
+      ru: "Явное переключение на root пользователя запрещено."
+      en: "Switching to root user or UID 0 is prohibited."
+
+  - id: "DF-C02"
+    type: "regex"
+    pattern: "(?i)(AWS|GCP|AZURE|SECRET|TOKEN|PASSWORD|PRIVATE_KEY|API_KEY)\\s*[=:]\\s*[^\\s]+"
+    severity: "CRITICAL"
+    cwe: [798]
+    cvss: 9.8
+    description: 
+      ru: "В коде найдены захардкоженные секреты или ключи доступа."
+      en: "Hardcoded secrets or API keys detected in the Dockerfile."
+
+  - id: "DF-C03"
+    type: "regex"
+    pattern: "COPY .*\\.(env|pem|key|p12|pfx|id_rsa)"
+    severity: "CRITICAL"
+    cvss: 8.8
+    cwe: [522]
+    description: 
+      ru: "Копирование конфигов с секретами или приватных ключей напрямую в образ."
+      en: "Sensitive files like .env or private keys are being copied into the image."
+
+  - id: "DF-C04"
+    type: "regex"
+    pattern: "RUN .*chmod 777"
+    severity: "CRITICAL"
+    cvss: 7.8
+    cwe: [732]
+    description: 
+      ru: "Установка прав 777 создает дыру в безопасности для произвольного выполнения кода."
+      en: "Insecure chmod 777 permissions detected. Risk of RCE."
+
+  - id: "DL3007"
+    type: "regex"
+    pattern: "FROM .*:latest"
+    severity: "CRITICAL"
+    link: https://github.com/hadolint/hadolint/wiki/DL3007
+    cvss: 6.5
+    cwe: [1104]
+    description: 
+      ru: "Использование тега latest ломает стабильность сборки и безопасность цепочки поставок."
+      en: "Using 'latest' tag is non-deterministic and risky for supply-chain security."
+
+  - id: "DL3020"
+    type: "regex"
+    pattern: "ADD\\s+https?://"
+    severity: "CRITICAL"
+    link: https://github.com/hadolint/hadolint/wiki/DL3020
+    cvss: 8.0
+    cwe: [494]
+    description: 
+      ru: "Инструкция ADD для внешних URL небезопасна. Используйте curl или wget внутри RUN."
+      en: "Using ADD with remote URLs is unsafe. Use curl or wget within a RUN command."
+
+  - id: "DF-C08"
+    type: "regex"
+    pattern: "RUN .*curl .*\\|.*sh"
+    severity: "CRITICAL"
+    cvss: 9.8
+    cwe: [494]
+    description: 
+      ru: "Выполнение скриптов напрямую через pipe из интернета - прямой путь к взлому."
+      en: "Piping curl directly to shell is a major security risk (RCE)."
+
+  - id: "DF-C10"
+    type: "regex"
+    pattern: "ENTRYPOINT .*sh"
+    severity: "CRITICAL"
+    cvss: 6.0
+    cwe: [710]
+    description: 
+      ru: "Использование shell в ENTRYPOINT мешает корректной обработке сигналов (SIGTERM)."
+      en: "Using shell as ENTRYPOINT prevents proper signal handling."
+
+  # HIGH
+
+  - id: "DF-H01"
+    type: "regex"
+    pattern: "FROM (?!alpine|ubuntu|debian|distroless|scratch|python|node|golang)"
+    severity: "HIGH"
+    cvss: 7.5
+    cwe: [829]
+    description: 
+      ru: "Используется базовый образ из непроверенного источника."
+      en: "Base image is from an untrusted or non-standard registry."
+
+  - id: "DF-H02"
+    type: "contains"
+    pattern: "EXPOSE 22"
+    severity: "HIGH"
+    cvss: 7.0
+    cwe: [668]
+    description: 
+      ru: "SSH в контейнере не нужен. Используйте 'docker exec' для отладки."
+      en: "SSH should not be exposed. Use 'docker exec' for debugging instead."
+
+  - id: "DF-H03"
+    type: "contains"
+    pattern: "sudo "
+    severity: "HIGH"
+    cvss: 7.0
+    cwe: [250]
+    description: 
+      ru: "Команда sudo не должна использоваться внутри контейнера."
+      en: "The 'sudo' command is an anti-pattern in Docker environments."
+
+  - id: "DL3005"
+    type: "regex"
+    pattern: "RUN .*apt-get .*upgrade"
+    severity: "HIGH"
+    link: https://github.com/hadolint/hadolint/wiki/DL3005
+    cvss: 7.0
+    cwe: [1104]
+    description: 
+      ru: "Команда upgrade внутри Dockerfile делает сборку непредсказуемой."
+      en: "Using 'apt upgrade' makes the build process non-deterministic."
+
+  - id: "DF-H07"
+    type: "regex"
+    pattern: "RUN .*nc .* -e"
+    severity: "HIGH"
+    cvss: 8.0
+    cwe: [78]
+    description: 
+      ru: "Найден паттерн reverse shell через netcat. Это признак бэкдора."
+      en: "Netcat reverse shell pattern detected. Potential backdoor."
+
+  # MEDIUM - Средние риски
+  - id: "DF-M01"
+    type: "regex"
+    pattern: "RUN .*apk add .*curl"
+    severity: "MEDIUM"
+    cvss: 4.0
+    cwe: [710]
+    description: 
+      ru: "Лишние утилиты (curl) увеличивают размер образа и поверхность атаки."
+      en: "Extra utilities like curl increase the image size and attack surface."
+
+  - id: "DF-M03"
+    type: "contains"
+    pattern: "EXPOSE 3306"
+    severity: "MEDIUM"
+    cvss: 5.3
+    cwe: [668]
+    description: 
+      ru: "Порт базы данных открыт наружу. Убедитесь, что это необходимо."
+      en: "Database port is exposed. Ensure this is not accidental."
+
+  - id: "DF-M05"
+    type: "regex"
+    pattern: "RUN .*chmod 666"
+    severity: "MEDIUM"
+    cvss: 6.5
+    cwe: [732]
+    description: 
+      ru: "Права на запись для всех (666) избыточны."
+      en: "World-writable permissions (666) are overly permissive."
+
+  # LOW
+  - id: "DF-L01"
+    type: "contains"
+    pattern: "DEBUG=true"
+    severity: "LOW"
+    cvss: 3.1
+    cwe: [489]
+    description: 
+      ru: "Переменная DEBUG оставлена включенной. Это снижает производительность."
+      en: "Debug mode is active. This can impact performance and security."
